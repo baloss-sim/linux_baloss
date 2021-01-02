@@ -1210,6 +1210,8 @@ static unsigned int first_packet_length(struct sock *sk)
 		UDP_INC_STATS_BH(sock_net(sk), UDP_MIB_INERRORS,
 				 IS_UDPLITE(sk));
 		atomic_inc(&sk->sk_drops);
+		/*Possible Bug fixed here (bug 2) */
+		atomic_inc(&sk->sk_c_drops);
 		__skb_unlink(skb, rcvq);
 		__skb_queue_tail(&list_kill, skb);
 	}
@@ -1870,7 +1872,8 @@ csum_error:
 	 * RFC1122: OK.  Discards the bad packet silently (as far as
 	 * the network is concerned, anyway) as per 4.1.3.4 (MUST).
 	 */
-	atomic_inc(&sk->sk_c_drops);
+	/*Possible Bug fixed here (bug 1) */
+	/*atomic_inc(&sk->sk_c_drops);*/
 	net_dbg_ratelimited("UDP%s: bad checksum. From %pI4:%u to %pI4:%u ulen %d\n",
 			    proto == IPPROTO_UDPLITE ? "Lite" : "",
 			    &saddr, ntohs(uh->source), &daddr, ntohs(uh->dest),
@@ -2194,7 +2197,9 @@ int udp_lib_getsockopt(struct sock *sk, int level, int optname,
 		val = atomic_read(&(sk->sk_c_drops));
 		break;
 	case UDP_OVER_LOSS:
-		val = atomic_read(&(sk->sk_drops)) - atomic_read(&(sk->sk_c_drops));
+		/* Possible Bug fixed here (bug 3) */
+		val = atomic_read(&(sk->sk_drops));
+		/*val = atomic_read(&(sk->sk_drops)) - atomic_read(&(sk->sk_c_drops));*/
 		break;
 	case UDP_CORK:
 		val = up->corkflag;
