@@ -1621,6 +1621,7 @@ csum_error:
 	UDP_INC_STATS_BH(sock_net(sk), UDP_MIB_CSUMERRORS, is_udplite);
 drop:
 	UDP_INC_STATS_BH(sock_net(sk), UDP_MIB_INERRORS, is_udplite);
+	// Example changing: atomic_inc(&sk->sk_drops) -->> atomic_inc(&(sk->sk_drops))
 	atomic_inc(&(sk->sk_drops));
 	kfree_skb(skb);
 	return -1;
