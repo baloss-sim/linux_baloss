@@ -1432,7 +1432,9 @@ struct sock *sk_alloc(struct net *net, int family, gfp_t priority,
 			get_net(net);
 		sock_net_set(sk, net);
 		atomic_set(&sk->sk_wmem_alloc, 1);
-
+        atomic_set(&sk->sk_c_drops, 0);
+		printk("Atomic: set: sk->sk_wmem_alloc %d\n ", atomic_read(&(sk->sk_wmem_alloc)));
+		printk("Atomic: set: sk->sk_c_drops %d\n ", atomic_read(&(sk->sk_c_drops)));
 		sock_update_classid(sk);
 		sock_update_netprioidx(sk);
 		sk_tx_queue_clear(sk);
@@ -2467,6 +2469,7 @@ void sock_init_data(struct socket *sock, struct sock *sk)
 	smp_wmb();
 	atomic_set(&sk->sk_refcnt, 1);
 	atomic_set(&sk->sk_drops, 0);
+	atomic_set(&sk->sk_c_drops, 0);
 }
 EXPORT_SYMBOL(sock_init_data);
 

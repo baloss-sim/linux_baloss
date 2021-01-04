@@ -1209,9 +1209,13 @@ static unsigned int first_packet_length(struct sock *sk)
 				 IS_UDPLITE(sk));
 		UDP_INC_STATS_BH(sock_net(sk), UDP_MIB_INERRORS,
 				 IS_UDPLITE(sk));
-		atomic_inc(&sk->sk_drops);
+		printk("Atomic: udp.c line 1212, original sk->sk_drops: %d\n", atomic_read(&(sk->sk_drops)));
+		atomic_inc(&(sk->sk_drops));
+		printk("Atomic: udp.c line 1214, new sk->sk_drops: %d\n", atomic_read(&(sk->sk_drops)));
 		/*Possible Bug fixed here (bug 2) */
-		atomic_inc(&sk->sk_c_drops);
+		printk("Atomic: udp.c line 1216, original sk->sk_c_drops: %d", atomic_read(&(sk->sk_c_drops)));
+		atomic_inc(&(sk->sk_c_drops));
+		printk("Atomic: udp.c line 1218, new sk->sk_c_drops: %d\n", atomic_read(&(sk->sk_c_drops)));
 		__skb_unlink(skb, rcvq);
 		__skb_queue_tail(&list_kill, skb);
 	}
@@ -1220,7 +1224,6 @@ static unsigned int first_packet_length(struct sock *sk)
 
 	if (!skb_queue_empty(&list_kill)) {
 		bool slow = lock_sock_fast(sk);
-
 		__skb_queue_purge(&list_kill);
 		sk_mem_reclaim_partial(sk);
 		unlock_sock_fast(sk, slow);
@@ -2194,11 +2197,13 @@ int udp_lib_getsockopt(struct sock *sk, int level, int optname,
 
 	switch (optname) {
 	case UDP_C_LOSS:
+		printk("UDP_C_LOSS: udp.c, line 2200, Atomic : sk->sk_c_drops, original: %d\n", atomic_read(&(sk->sk_c_drops)));
 		val = atomic_read(&(sk->sk_c_drops));
 		break;
 	case UDP_OVER_LOSS:
 		/* Possible Bug fixed here (bug 3) */
 		val = atomic_read(&(sk->sk_drops));
+		printk("UDP_OVER_LOSS: udp.c, line 2206, Atomic : sk->sk_drops, original: %d\n", atomic_read(&(sk->sk_drops)));
 		/*val = atomic_read(&(sk->sk_drops)) - atomic_read(&(sk->sk_c_drops));*/
 		break;
 	case UDP_CORK:
