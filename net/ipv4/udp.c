@@ -1328,7 +1328,7 @@ try_again:
 	if (unlikely(err)) {
 		trace_kfree_skb(skb, udp_recvmsg);
 		if (!peeked) {
-			atomic_inc(&sk->sk_drops);
+			atomic_inc(&(sk->sk_drops));
 			UDP_INC_STATS_USER(sock_net(sk),
 					   UDP_MIB_INERRORS, is_udplite);
 		}
@@ -1621,7 +1621,7 @@ csum_error:
 	UDP_INC_STATS_BH(sock_net(sk), UDP_MIB_CSUMERRORS, is_udplite);
 drop:
 	UDP_INC_STATS_BH(sock_net(sk), UDP_MIB_INERRORS, is_udplite);
-	atomic_inc(&sk->sk_drops);
+	atomic_inc(&(sk->sk_drops));
 	kfree_skb(skb);
 	return -1;
 }
@@ -1639,7 +1639,7 @@ static void flush_stack(struct sock **stack, unsigned int count,
 			skb1 = (i == final) ? skb : skb_clone(skb, GFP_ATOMIC);
 
 		if (!skb1) {
-			atomic_inc(&sk->sk_drops);
+			atomic_inc(&(sk->sk_drops));
 			UDP_INC_STATS_BH(sock_net(sk), UDP_MIB_RCVBUFERRORS,
 					 IS_UDPLITE(sk));
 			UDP_INC_STATS_BH(sock_net(sk), UDP_MIB_INERRORS,
