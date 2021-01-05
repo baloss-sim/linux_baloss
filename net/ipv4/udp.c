@@ -1209,13 +1209,7 @@ static unsigned int first_packet_length(struct sock *sk)
 				 IS_UDPLITE(sk));
 		UDP_INC_STATS_BH(sock_net(sk), UDP_MIB_INERRORS,
 				 IS_UDPLITE(sk));
-		printk("Atomic: udp.c line 1212, original sk->sk_drops: %d\n", atomic_read(&(sk->sk_drops)));
 		atomic_inc(&(sk->sk_drops));
-		printk("Atomic: udp.c line 1214, new sk->sk_drops: %d\n", atomic_read(&(sk->sk_drops)));
-		/*Possible Bug fixed here (bug 2) */
-		printk("Atomic: udp.c line 1216, original sk->sk_c_drops: %d", atomic_read(&(sk->sk_c_drops)));
-		atomic_inc(&(sk->sk_c_drops));
-		printk("Atomic: udp.c line 1218, new sk->sk_c_drops: %d\n", atomic_read(&(sk->sk_c_drops)));
 		__skb_unlink(skb, rcvq);
 		__skb_queue_tail(&list_kill, skb);
 	}
@@ -1621,8 +1615,13 @@ csum_error:
 	UDP_INC_STATS_BH(sock_net(sk), UDP_MIB_CSUMERRORS, is_udplite);
 drop:
 	UDP_INC_STATS_BH(sock_net(sk), UDP_MIB_INERRORS, is_udplite);
-	// Example changing: atomic_inc(&sk->sk_drops) -->> atomic_inc(&(sk->sk_drops))
+	//printk("Atomic: udp.c line 1212, original sk->sk_drops: %d\n", atomic_read(&(sk->sk_drops)));
 	atomic_inc(&(sk->sk_drops));
+	//printk("Atomic: udp.c line 1214, new sk->sk_drops: %d\n", atomic_read(&(sk->sk_drops)));
+	/*Possible Bug fixed here (bug 2) */
+	printk("Atomic: udp.c line 1216, original sk->sk_c_drops: %d", atomic_read(&(sk->sk_c_drops)));
+	atomic_inc(&(sk->sk_c_drops));
+	printk("Atomic: udp.c line 1218, new sk->sk_c_drops: %d\n", atomic_read(&(sk->sk_c_drops)));
 	kfree_skb(skb);
 	return -1;
 }
@@ -1876,8 +1875,6 @@ csum_error:
 	 * RFC1122: OK.  Discards the bad packet silently (as far as
 	 * the network is concerned, anyway) as per 4.1.3.4 (MUST).
 	 */
-	/*Possible Bug fixed here (bug 1) */
-	/*atomic_inc(&sk->sk_c_drops);*/
 	net_dbg_ratelimited("UDP%s: bad checksum. From %pI4:%u to %pI4:%u ulen %d\n",
 			    proto == IPPROTO_UDPLITE ? "Lite" : "",
 			    &saddr, ntohs(uh->source), &daddr, ntohs(uh->dest),
@@ -2195,17 +2192,19 @@ int udp_lib_getsockopt(struct sock *sk, int level, int optname,
 
 	if (len < 0)
 		return -EINVAL;
-
+	
 	switch (optname) {
 	case UDP_C_LOSS:
-		printk("UDP_C_LOSS: udp.c, line 2200, Atomic : sk->sk_c_drops, original: %d\n", atomic_read(&(sk->sk_c_drops)));
-		val = atomic_read(&(sk->sk_c_drops));
+		val = atomic_read(&sk->sk_c_drops);
+		printk("UDP_C_LOSS: udp.c, line 2199, Atomic : sk->sk_c_drops, original: %d\n", atomic_read(&sk->sk_c_drops));
+		printk("UDP_C_LOSS: udp.c, line 2200, Atomic : val: %d\n", val);
 		break;
 	case UDP_OVER_LOSS:
 		/* Possible Bug fixed here (bug 3) */
-		val = atomic_read(&(sk->sk_drops));
-		printk("UDP_OVER_LOSS: udp.c, line 2206, Atomic : sk->sk_drops, original: %d\n", atomic_read(&(sk->sk_drops)));
-		/*val = atomic_read(&(sk->sk_drops)) - atomic_read(&(sk->sk_c_drops));*/
+		val = atomic_read(&sk->sk_drops);
+		printk("UDP_OVER_LOSS: udp.c, line 2205, Atomic : sk->sk_drops, original: %d\n", atomic_read(&sk->sk_drops));
+		printk("UDP_C_LOSS: udp.c, line 2206, Atomic : val: %d\n", val);
+		/*val = atomic_read(&(sk->sk_drops)) - atomic_read(&sk->sk_c_drops);*/
 		break;
 	case UDP_CORK:
 		val = up->corkflag;
@@ -2236,6 +2235,7 @@ int udp_lib_getsockopt(struct sock *sk, int level, int optname,
 	default:
 		return -ENOPROTOOPT;
 	}
+	
 
 	if (put_user(len, optlen))
 		return -EFAULT;
